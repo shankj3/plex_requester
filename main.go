@@ -129,6 +129,18 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func ListRequests(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    file, err := ioutil.ReadFile(FileLocation)
+    if err != nil {
+        w.Write([]byte("cannot fulfill ListRequests"))
+    } else {
+        w.Header().Set("Content-Type", "application/json")
+        w.Write(file)
+    }
+
+}
+
 func Homepage(w http.ResponseWriter, r *http.Request) {
     currentReqs := &RequestList{}
     ReadFromFile(currentReqs, FileLocation)
@@ -150,6 +162,8 @@ func main() {
 
     //TODO: email or text notification that something new got added?
     mux.HandleFunc("/finishhim/{id}", FinishHim).Methods("POST")
+
+    mux.HandleFunc("/requests", ListRequests).Methods("GET")
 
     n := negroni.Classic()
     n.UseHandler(mux)
