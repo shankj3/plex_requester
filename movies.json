@@ -3,13 +3,13 @@
   "some-random-uuid": {
     "title": "this is a movie",
     "requestType": "movie",
-    "timeRequested" : 1509930529195
+    "timeRequested" :  "1972-05-01T10:00:20.021Z"
   },
   "another-random-uuid": {
     "title": "this is a tv show",
     "requestType": "tv",
     "season": 1,
-    "timeRequested" : 1509930529199
+    "timeRequested" : "1972-05-23T10:00:20.021Z"
   }
 }
 }
