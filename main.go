@@ -25,6 +25,7 @@ import (
     "github.com/gorilla/mux"
     "github.com/urfave/negroni"
     "io/ioutil"
+    "html/template"
     "log"
     "net/http"
     "os"
@@ -112,12 +113,21 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
 	err = ioutil.WriteFile(FileLocation, []byte(reqs), FilePerm)
 }
 
+func Homepage (w http.ResponseWriter, r *http.Request) {
+    body, _ := ioutil.ReadFile(FileLocation)
+    //p, _ := &Page{Title: title, Body: body}
+    //TODO: wait for the part that can convert io to pb object
+    renderTemplate(w, "index", body)
+}
+
 func main() {
     port := os.Getenv("PORT")
     if port == "" {
         port = "8080"
     }
     mux := mux.NewRouter()
+
+    mux.HandleFunc("/", Homepage).Methods("GET")
 
     //TODO: validate adding input with tmdb api
     mux.HandleFunc("/add", AddRequest).Methods("POST")
@@ -130,4 +140,10 @@ func main() {
     n.UseHandler(mux)
     n.Run(":" + port)
 
+}
+
+//copied verbatim from golang docs
+func renderTemplate(w http.ResponseWriter, tmpl string, currentList *RequestList) {
+    t, _ := template.ParseFiles(tmpl + ".html")
+    t.Execute(w, currentList)
 }
