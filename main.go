@@ -28,12 +28,6 @@ func AddRequest(w http.ResponseWriter, r *http.Request) {
 
 }
 
-type PlexMovieRequest struct {
-    title       string
-    requestType string
-    season      string
-}
-
 func main() {
     port := os.Getenv("PORT")
     if port == "" {

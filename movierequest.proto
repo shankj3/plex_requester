@@ -1,0 +1,13 @@
+syntax = "proto3";
+package main;
+
+
+message PlexMovieRequest {
+    string title = 1;
+    string requestType = 2;
+    string season = 3;
+}
+
+message RequestList {
+    repeated PlexMovieRequest requests = 1;
+}
