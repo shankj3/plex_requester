@@ -18,9 +18,7 @@ Request:
 package main
 
 import (
-    // "fmt"
     "bytes"
-    "fmt"
     "github.com/golang/protobuf/jsonpb"
     "github.com/golang/protobuf/ptypes"
     "github.com/google/uuid"
@@ -104,14 +102,14 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
     fileData, err := ioutil.ReadFile(FileLocation) // just pass the file name
 
     if err != nil {
-        fmt.Print(err)
+        log.Println("couldn't file file at "+FileLocation, err)
     }
 
     byteReader := bytes.NewReader(fileData)
     currentReqs := &RequestList{}
 
     if err := unmarshaler.Unmarshal(byteReader, currentReqs); err != nil {
-        fmt.Print(err)
+        log.Println("couldn't parse file", err)
     }
 
     _, ok := currentReqs.Shitwewant[itemId]
@@ -121,7 +119,6 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
     } else {
         //it's not there it's not there
     }
-
     //overwrite file
     if err = WriteToFile(currentReqs, FileLocation); err != nil {
         log.Fatal("BORKEN! ", err)
