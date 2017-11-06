@@ -19,6 +19,7 @@ package main
 
 import (
     // "fmt"
+    "bufio"
     "github.com/golang/protobuf/jsonpb"
     "github.com/golang/protobuf/ptypes"
     "github.com/google/uuid"
@@ -29,9 +30,11 @@ import (
     "os"
 )
 
+const FILELOCATION = "/Users/jesseshank/go/src/github.com/shankj3/plex_requester/requests/requestList.json"
+
 func AddRequest(w http.ResponseWriter, r *http.Request) {
     // todo: validate against the movie database, tmdb when you get a api key
-    rq := PlexMovieRequest{}
+    rq := []PlexMovieRequest{}
     unmarshaler := &jsonpb.Unmarshaler{
         AllowUnknownFields: true,
     }
@@ -47,6 +50,19 @@ func AddRequest(w http.ResponseWriter, r *http.Request) {
     // once validated, add timestamp and uuid
     rq.Uuid = uuid.New().String()
     rq.TimeRequested = ptypes.TimestampNow()
+
+    // read file, then write to file
+    // raw, err := ioutil.Reader(FILELOCATION)
+    f, err := os.Open(FILELOCATION)
+    if err != nil {
+        log.Fatal(err)
+    }
+    raw := bufio.NewReader(f)
+    requestList := RequestList{}
+    if err = unmarshaler.Unmarshal(raw, &requestList); err != nil {
+        log.Fatal(err)
+    }
+    log.Println(requestList)
     w.Write([]byte("hi"))
 
 }
