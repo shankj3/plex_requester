@@ -62,18 +62,18 @@ func AddRequest(w http.ResponseWriter, r *http.Request) {
     // once validated, add timestamp and uuid
     // rq.Uuid = uuid.New().String()
     rq.TimeRequested = ptypes.TimestampNow()
-    renderTemplate(w, "index", Append(rq, FileLocation, uuid.New().String()))
+    Append(rq, FileLocation, uuid.New().String())
+    http.Redirect(w, r, "/", http.StatusSeeOther)
 
 }
 
-func Append(request *PlexMovieRequest, fileLoc string, uuid string) *RequestList {
+func Append(request *PlexMovieRequest, fileLoc string, uuid string) {
     requestList := &RequestList{}
     ReadFromFile(requestList, fileLoc)
     requestList.Shitwewant[uuid] = request
     if err := WriteToFile(requestList, fileLoc); err != nil {
         log.Fatal("error writing to file ", err)
     }
-    return requestList
 }
 
 func WriteToFile(msg *RequestList, fileLoc string) error {
