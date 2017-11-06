@@ -10,7 +10,7 @@ Request:
 {
     "title": string,
     "requestType": movie/tv show,
-    "season" (optional): season #
+    "season" (optional): season #,
 }
 
 */
@@ -18,8 +18,13 @@ Request:
 package main
 
 import (
+    // "fmt"
+    "github.com/golang/protobuf/jsonpb"
+    "github.com/golang/protobuf/ptypes"
+    "github.com/google/uuid"
     "github.com/gorilla/mux"
     "github.com/urfave/negroni"
+    "log"
     "net/http"
     "os"
     "io/ioutil"
@@ -32,7 +37,31 @@ const FileLocation = "file.json"
 var unmarshaler = &jsonpb.Unmarshaler{}
 
 func AddRequest(w http.ResponseWriter, r *http.Request) {
+    // todo: validate against the movie database, tmdb when you get a api key
+    rq := PlexMovieRequest{}
+    unmarshaler := &jsonpb.Unmarshaler{
+        AllowUnknownFields: true,
+    }
+    if err := unmarshaler.Unmarshal(r.Body, &rq); err != nil {
+        log.Println("Can't unmarshal object!", err)
+        // return error summary and erro code
+    }
+    // validate
+    if err := Validate(&rq); err != nil {
+        log.Println("Missed Validations")
+        //  return missing fields
+    }
+    // once validated, add timestamp and uuid
+    rq.Uuid = uuid.New().String()
+    rq.TimeRequested = ptypes.TimestampNow()
+    w.Write([]byte("hi"))
 
+}
+
+func Validate(movieRequest *PlexMovieRequest) error {
+    // fmt.Println(movieRequest)
+    // validate w/ movie database
+    return nil
 }
 
 

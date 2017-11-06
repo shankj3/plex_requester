@@ -1,11 +1,15 @@
 syntax = "proto3";
 package main;
+import "google/protobuf/timestamp.proto";
 
 
 message PlexMovieRequest {
     string title = 1;
     string requestType = 2;
     string season = 3;
+    string uuid = 4;
+    google.protobuf.Timestamp time_requested = 5;
+
 }
 
 message RequestList {
