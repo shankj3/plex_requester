@@ -33,8 +33,10 @@ import (
 )
 
 const FileLocation = "movies.json"
+var FilePerm os.FileMode = 0777
 
 var unmarshaler = &jsonpb.Unmarshaler{}
+var marshaler = &jsonpb.Marshaler{}
 
 func AddRequest(w http.ResponseWriter, r *http.Request) {
 	// todo: validate against the movie database, tmdb when you get a api key
@@ -75,20 +77,26 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	byteReader := bytes.NewReader(fileData)
-	currentReqs := *RequestList{}
+	currentReqs := &RequestList{}
 
 	if err := unmarshaler.Unmarshal(byteReader, currentReqs); err != nil {
 		fmt.Print(err)
 	}
 
-	//for index, item := range people {
-	//if item.ID == params["id"] {
-	//people = append(people[:index], people[index+1:]...)
-	//break
-	//}
-	//json.NewEncoder(w).Encode(people)
-	//}
+	_, ok := currentReqs.Shitwewant[itemId]
 
+	if ok {
+		delete(currentReqs.Shitwewant, itemId)
+	} else {
+		//it's not there it's not there
+	}
+
+	//overwrite file
+	reqs, err := marshaler.MarshalToString(currentReqs)
+	if err != nil {
+		fmt.Print(err)
+	}
+	err = ioutil.WriteFile(FileLocation, []byte(reqs), FilePerm)
 }
 
 func main() {
