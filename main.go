@@ -4,6 +4,15 @@ We want to:
 - have ability to see all requests through webpage
 - "cross off" finished uploads
 - request via webpage or rest call
+
+Request:
+
+{
+    "title": string,
+    "requestType": movie/tv show,
+    "season" (optional): season #
+}
+
 */
 
 package main
@@ -11,9 +20,19 @@ package main
 import (
     "github.com/gorilla/mux"
     "github.com/urfave/negroni"
-    // "net/http"
+    "net/http"
     "os"
 )
+
+func AddRequest(w http.ResponseWriter, r *http.Request) {
+
+}
+
+type PlexMovieRequest struct {
+    title       string
+    requestType string
+    season      string
+}
 
 func main() {
     port := os.Getenv("PORT")
@@ -21,7 +40,7 @@ func main() {
         port = "8080"
     }
     mux := mux.NewRouter()
-    // mux.HandleFunc("/add")
+    mux.HandleFunc("/add", AddRequest).Methods("POST")
     // mux.HandleFunc("/subtract")
 
     n := negroni.Classic()
