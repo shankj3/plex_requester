@@ -86,6 +86,21 @@ func WriteToFile(msg *RequestList, fileLoc string) error {
     return nil
 }
 
+func ReadFromFile(requestList *RequestList) {
+    fileData, err := ioutil.ReadFile(FileLocation) // just pass the file name
+
+    if err != nil {
+        log.Println("couldn't file file at "+FileLocation, err)
+    }
+
+    byteReader := bytes.NewReader(fileData)
+
+    if err := unmarshaler.Unmarshal(byteReader, requestList); err != nil {
+        log.Println("couldn't parse file", err)
+    }
+
+}
+
 func Validate(movieRequest *PlexMovieRequest) error {
     // fmt.Println(movieRequest)
     // validate w/ movie database
@@ -100,18 +115,8 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
     params := mux.Vars(r)
     itemId := params["id"]
 
-    fileData, err := ioutil.ReadFile(FileLocation) // just pass the file name
-
-    if err != nil {
-        log.Println("couldn't file file at "+FileLocation, err)
-    }
-
-    byteReader := bytes.NewReader(fileData)
     currentReqs := &RequestList{}
-
-    if err := unmarshaler.Unmarshal(byteReader, currentReqs); err != nil {
-        log.Println("couldn't parse file", err)
-    }
+    ReadFromFile(currentReqs)
 
     _, ok := currentReqs.Shitwewant[itemId]
 
@@ -121,16 +126,15 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
         //it's not there it's not there
     }
     //overwrite file
-    if err = WriteToFile(currentReqs, FileLocation); err != nil {
+    if err := WriteToFile(currentReqs, FileLocation); err != nil {
         log.Fatal("BORKEN! ", err)
     }
 }
 
 func Homepage (w http.ResponseWriter, r *http.Request) {
-    body, _ := ioutil.ReadFile(FileLocation)
-    //p, _ := &Page{Title: title, Body: body}
-    //TODO: wait for the part that can convert io to pb object
-    renderTemplate(w, "index", body)
+    currentReqs := &RequestList{}
+    ReadFromFile(currentReqs)
+    renderTemplate(w, "index", currentReqs)
 }
 
 func main() {
