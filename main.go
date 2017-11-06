@@ -29,6 +29,7 @@ import (
     "log"
     "net/http"
     "os"
+    "strconv"
 )
 
 const FileLocation = "movies.json"
@@ -41,30 +42,38 @@ var marshaler = &jsonpb.Marshaler{}
 
 func AddRequest(w http.ResponseWriter, r *http.Request) {
     // todo: validate against the movie database, tmdb when you get a api key
-    rq := PlexMovieRequest{}
-    if err := unmarshaler.Unmarshal(r.Body, &rq); err != nil {
-        log.Println("Can't unmarshal object!", err)
-        // return error summary and erro code
+    tvSeason, err := strconv.ParseInt(r.FormValue("season"), 10, 32)
+
+    if err != nil {
+        log.Println("tv season wasn't a number", err)
     }
+
+    rq := &PlexMovieRequest{
+        Title:       r.FormValue("title"),
+        RequestType: r.FormValue("requesttype"),
+        Season:      int32(tvSeason),
+    }
+
     // validate
-    if err := Validate(&rq); err != nil {
+    if err := Validate(rq); err != nil {
         log.Println("Missed Validations")
         //  return missing fields
     }
     // once validated, add timestamp and uuid
     // rq.Uuid = uuid.New().String()
     rq.TimeRequested = ptypes.TimestampNow()
-    Append(&rq, FileLocation, uuid.New().String())
-    w.Write([]byte("hi"))
+    renderTemplate(w, "index", Append(rq, FileLocation, uuid.New().String()))
+
 }
 
-func Append(request *PlexMovieRequest, fileLoc string, uuid string) {
+func Append(request *PlexMovieRequest, fileLoc string, uuid string) *RequestList {
     requestList := &RequestList{}
     ReadFromFile(requestList, fileLoc)
     requestList.Shitwewant[uuid] = request
     if err := WriteToFile(requestList, fileLoc); err != nil {
         log.Fatal("error writing to file ", err)
     }
+    return requestList
 }
 
 func WriteToFile(msg *RequestList, fileLoc string) error {

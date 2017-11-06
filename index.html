@@ -1,8 +1,21 @@
 <h1>Current List</h1>
 
 {{ range $key, $value := .Shitwewant }}
-<li>{{ $value }}</li>
+<li>
+    <b>Title:</b>{{ $value.Title }},
+    <b>Type:</b>{{ $value.RequestType }},
+    <b>Season:</b>{{ $value.Season }}
+</li>
 {{ end }}
 
+<h1>Add New Item</h1>
+
+
+<form action="/add" method="POST">
+    Title:<input type="text" name="title"></br>
+    RequestType:<input type="text" name="requesttype"></br>
+    (optional) Season:<input type="text" name="season"></br>
+    <input type="submit" value="yaaaaas">
+</form>
 
 
