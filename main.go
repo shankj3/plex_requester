@@ -24,14 +24,15 @@ import (
     "github.com/google/uuid"
     "github.com/gorilla/mux"
     "github.com/urfave/negroni"
-    "io/ioutil"
     "html/template"
+    "io/ioutil"
     "log"
     "net/http"
     "os"
 )
 
 const FileLocation = "movies.json"
+const FinishedLocation = "finished.json"
 
 var FilePerm os.FileMode = 0777
 
@@ -41,9 +42,6 @@ var marshaler = &jsonpb.Marshaler{}
 func AddRequest(w http.ResponseWriter, r *http.Request) {
     // todo: validate against the movie database, tmdb when you get a api key
     rq := PlexMovieRequest{}
-    unmarshaler := &jsonpb.Unmarshaler{
-        AllowUnknownFields: true,
-    }
     if err := unmarshaler.Unmarshal(r.Body, &rq); err != nil {
         log.Println("Can't unmarshal object!", err)
         // return error summary and erro code
@@ -56,23 +54,17 @@ func AddRequest(w http.ResponseWriter, r *http.Request) {
     // once validated, add timestamp and uuid
     // rq.Uuid = uuid.New().String()
     rq.TimeRequested = ptypes.TimestampNow()
-
-    // read file, then write to file
-    // raw, err := ioutil.Reader(FILELOCATION)
-    fileData, err := ioutil.ReadFile(FileLocation)
-    if err != nil {
-        log.Fatal("HELP ME", err)
-    }
-    raw := bytes.NewReader(fileData)
-    requestList := RequestList{}
-    if err = unmarshaler.Unmarshal(raw, &requestList); err != nil {
-        log.Fatal("HELP ME w/ unmarshaler! ", err)
-    }
-    requestList.Shitwewant[uuid.New().String()] = &rq
-    if err = WriteToFile(&requestList, FileLocation); err != nil {
-        log.Fatal("BORKEN! ", err)
-    }
+    Append(&rq, FileLocation, uuid.New().String())
     w.Write([]byte("hi"))
+}
+
+func Append(request *PlexMovieRequest, fileLoc string, uuid string) {
+    requestList := &RequestList{}
+    ReadFromFile(requestList, fileLoc)
+    requestList.Shitwewant[uuid] = request
+    if err := WriteToFile(requestList, fileLoc); err != nil {
+        log.Fatal("error writing to file ", err)
+    }
 }
 
 func WriteToFile(msg *RequestList, fileLoc string) error {
@@ -86,11 +78,11 @@ func WriteToFile(msg *RequestList, fileLoc string) error {
     return nil
 }
 
-func ReadFromFile(requestList *RequestList) {
-    fileData, err := ioutil.ReadFile(FileLocation) // just pass the file name
+func ReadFromFile(requestList *RequestList, fileLoc string) {
+    fileData, err := ioutil.ReadFile(fileLoc) // just pass the file name
 
     if err != nil {
-        log.Println("couldn't file file at "+FileLocation, err)
+        log.Println("couldn't file file at "+fileLoc, err)
     }
 
     byteReader := bytes.NewReader(fileData)
@@ -108,6 +100,7 @@ func Validate(movieRequest *PlexMovieRequest) error {
 }
 
 func FinishHim(w http.ResponseWriter, r *http.Request) {
+    r.Header.Set("FINISHED", "true")
     SubtractRequest(w, r)
 }
 
@@ -116,14 +109,19 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
     itemId := params["id"]
 
     currentReqs := &RequestList{}
-    ReadFromFile(currentReqs)
+    ReadFromFile(currentReqs, FileLocation)
 
-    _, ok := currentReqs.Shitwewant[itemId]
+    plexReq, ok := currentReqs.Shitwewant[itemId]
 
     if ok {
         delete(currentReqs.Shitwewant, itemId)
     } else {
         //it's not there it's not there
+    }
+    // if finished header set, add to finished.json before deleting from FileLocation
+    log.Printf("REQUEST HEADERS!! %v", r.Header)
+    if finished := r.Header.Get("FINISHED"); finished == "true" {
+        Append(plexReq, FinishedLocation, itemId)
     }
     //overwrite file
     if err := WriteToFile(currentReqs, FileLocation); err != nil {
@@ -131,9 +129,9 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-func Homepage (w http.ResponseWriter, r *http.Request) {
+func Homepage(w http.ResponseWriter, r *http.Request) {
     currentReqs := &RequestList{}
-    ReadFromFile(currentReqs)
+    ReadFromFile(currentReqs, FileLocation)
     renderTemplate(w, "index", currentReqs)
 }
 
