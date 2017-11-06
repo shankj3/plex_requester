@@ -49,8 +49,14 @@ func main() {
         port = "8080"
     }
     mux := mux.NewRouter()
+
+    //TODO: validate adding input with tmdb api
     mux.HandleFunc("/add", AddRequest).Methods("POST")
+
     // mux.HandleFunc("/subtract")
+
+    //TODO: email or text notification that something new got added?
+    // mux.HandleFunc("/finishhim")
 
     n := negroni.Classic()
     n.UseHandler(mux)
