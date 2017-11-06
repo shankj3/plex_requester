@@ -1,0 +1,15 @@
+{
+"shitwewant": {
+  "some-random-uuid": {
+    "title": "this is a movie",
+    "requestType": "movie",
+    "timeRequested" : 1509930529195
+  },
+  "another-random-uuid": {
+    "title": "this is a tv show",
+    "requestType": "tv",
+    "season": 1,
+    "timeRequested" : 1509930529199
+  }
+}
+}

@@ -19,22 +19,26 @@ package main
 
 import (
     // "fmt"
-    "bufio"
+    "bytes"
+    "fmt"
     "github.com/golang/protobuf/jsonpb"
     "github.com/golang/protobuf/ptypes"
-    "github.com/google/uuid"
+    // "github.com/google/uuid"
     "github.com/gorilla/mux"
     "github.com/urfave/negroni"
+    "io/ioutil"
     "log"
     "net/http"
     "os"
 )
 
-const FILELOCATION = "/Users/jesseshank/go/src/github.com/shankj3/plex_requester/requests/requestList.json"
+const FileLocation = "movies.json"
+
+var unmarshaler = &jsonpb.Unmarshaler{}
 
 func AddRequest(w http.ResponseWriter, r *http.Request) {
     // todo: validate against the movie database, tmdb when you get a api key
-    rq := []PlexMovieRequest{}
+    rq := PlexMovieRequest{}
     unmarshaler := &jsonpb.Unmarshaler{
         AllowUnknownFields: true,
     }
@@ -48,29 +52,54 @@ func AddRequest(w http.ResponseWriter, r *http.Request) {
         //  return missing fields
     }
     // once validated, add timestamp and uuid
-    rq.Uuid = uuid.New().String()
+    // rq.Uuid = uuid.New().String()
     rq.TimeRequested = ptypes.TimestampNow()
 
     // read file, then write to file
     // raw, err := ioutil.Reader(FILELOCATION)
-    f, err := os.Open(FILELOCATION)
+    fileData, err := ioutil.ReadFile(FileLocation)
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("HELP ME", err)
     }
-    raw := bufio.NewReader(f)
+    raw := bytes.NewReader(fileData)
     requestList := RequestList{}
     if err = unmarshaler.Unmarshal(raw, &requestList); err != nil {
-        log.Fatal(err)
+        log.Fatal("HELP ME w/ unmarshaler! ", err)
     }
-    log.Println(requestList)
     w.Write([]byte("hi"))
-
 }
 
 func Validate(movieRequest *PlexMovieRequest) error {
     // fmt.Println(movieRequest)
     // validate w/ movie database
     return nil
+}
+
+func SubtractRequest(w http.ResponseWriter, r *http.Request) {
+    // params := mux.Vars(r)
+    // itemId := params["id"]
+
+    fileData, err := ioutil.ReadFile(FileLocation) // just pass the file name
+
+    if err != nil {
+        fmt.Print(err)
+    }
+
+    byteReader := bytes.NewReader(fileData)
+    currentReqs := &RequestList{}
+
+    if err := unmarshaler.Unmarshal(byteReader, currentReqs); err != nil {
+        fmt.Print(err)
+    }
+
+    //for index, item := range people {
+    //if item.ID == params["id"] {
+    //people = append(people[:index], people[index+1:]...)
+    //break
+    //}
+    //json.NewEncoder(w).Encode(people)
+    //}
+
 }
 
 func main() {
@@ -83,7 +112,7 @@ func main() {
     //TODO: validate adding input with tmdb api
     mux.HandleFunc("/add", AddRequest).Methods("POST")
 
-    // mux.HandleFunc("/subtract")
+    mux.HandleFunc("/subtract/{id}", SubtractRequest).Methods("DELETE")
 
     //TODO: email or text notification that something new got added?
     // mux.HandleFunc("/finishhim")
