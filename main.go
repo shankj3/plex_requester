@@ -66,6 +66,7 @@ func AddRequest(w http.ResponseWriter, r *http.Request) {
     if err = unmarshaler.Unmarshal(raw, &requestList); err != nil {
         log.Fatal("HELP ME w/ unmarshaler! ", err)
     }
+    requestList.shitwewant[uuid.New().String()] = rq
     w.Write([]byte("hi"))
 }
 
