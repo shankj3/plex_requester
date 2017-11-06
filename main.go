@@ -18,9 +18,7 @@ Request:
 package main
 
 import (
-    // "fmt"
     "bytes"
-    "fmt"
     "github.com/golang/protobuf/jsonpb"
     "github.com/golang/protobuf/ptypes"
     // "github.com/google/uuid"
