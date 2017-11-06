@@ -29,6 +29,7 @@ import (
     "log"
     "net/http"
     "os"
+    "strconv"
 )
 
 const FileLocation = "movies.json"
@@ -40,14 +41,14 @@ var marshaler = &jsonpb.Marshaler{}
 
 func AddRequest(w http.ResponseWriter, r *http.Request) {
     // todo: validate against the movie database, tmdb when you get a api key
-    rq := PlexMovieRequest{}
-    unmarshaler := &jsonpb.Unmarshaler{
-        AllowUnknownFields: true,
+    tvSeason, err := strconv.ParseInt(r.FormValue("season"), 10, 32)
+
+    rq := PlexMovieRequest{
+        Title: r.FormValue("title"),
+        RequestType: r.FormValue("requesttype"),
+        Season: int32(tvSeason),
     }
-    if err := unmarshaler.Unmarshal(r.Body, &rq); err != nil {
-        log.Println("Can't unmarshal object!", err)
-        // return error summary and erro code
-    }
+
     // validate
     if err := Validate(&rq); err != nil {
         log.Println("Missed Validations")
@@ -64,15 +65,16 @@ func AddRequest(w http.ResponseWriter, r *http.Request) {
         log.Fatal("HELP ME", err)
     }
     raw := bytes.NewReader(fileData)
-    requestList := RequestList{}
-    if err = unmarshaler.Unmarshal(raw, &requestList); err != nil {
+    requestList := &RequestList{}
+    if err = unmarshaler.Unmarshal(raw, requestList); err != nil {
         log.Fatal("HELP ME w/ unmarshaler! ", err)
     }
     requestList.Shitwewant[uuid.New().String()] = &rq
-    if err = WriteToFile(&requestList, FileLocation); err != nil {
+    if err = WriteToFile(requestList, FileLocation); err != nil {
         log.Fatal("BORKEN! ", err)
     }
-    w.Write([]byte("hi"))
+
+    renderTemplate(w, "index", requestList)
 }
 
 func WriteToFile(msg *RequestList, fileLoc string) error {
