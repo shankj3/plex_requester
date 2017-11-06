@@ -4,6 +4,15 @@ We want to:
 - have ability to see all requests through webpage
 - "cross off" finished uploads
 - request via webpage or rest call
+
+Request:
+
+{
+    "title": string,
+    "requestType": movie/tv show,
+    "season" (optional): season #
+}
+
 */
 
 package main
@@ -11,9 +20,13 @@ package main
 import (
     "github.com/gorilla/mux"
     "github.com/urfave/negroni"
-    // "net/http"
+    "net/http"
     "os"
 )
+
+func AddRequest(w http.ResponseWriter, r *http.Request) {
+
+}
 
 func main() {
     port := os.Getenv("PORT")
@@ -21,13 +34,13 @@ func main() {
         port = "8080"
     }
     mux := mux.NewRouter()
-    //TODO: validate adding input with tmdb api
-    // mux.HandleFunc("/add")
 
-    //TODO: email or text notification that something new got added?
+    //TODO: validate adding input with tmdb api
+    mux.HandleFunc("/add", AddRequest).Methods("POST")
+
     // mux.HandleFunc("/subtract")
 
-
+    //TODO: email or text notification that something new got added?
     // mux.HandleFunc("/finishhim")
 
     n := negroni.Classic()
