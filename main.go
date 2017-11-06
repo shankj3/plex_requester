@@ -24,8 +24,8 @@ import (
     "github.com/google/uuid"
     "github.com/gorilla/mux"
     "github.com/urfave/negroni"
-    "io/ioutil"
     "html/template"
+    "io/ioutil"
     "log"
     "net/http"
     "os"
@@ -33,6 +33,7 @@ import (
 )
 
 const FileLocation = "movies.json"
+const FinishedLocation = "finished.json"
 
 var FilePerm os.FileMode = 0777
 
@@ -43,38 +44,36 @@ func AddRequest(w http.ResponseWriter, r *http.Request) {
     // todo: validate against the movie database, tmdb when you get a api key
     tvSeason, err := strconv.ParseInt(r.FormValue("season"), 10, 32)
 
-    rq := PlexMovieRequest{
-        Title: r.FormValue("title"),
+    if err != nil {
+        log.Println("tv season wasn't a number", err)
+    }
+
+    rq := &PlexMovieRequest{
+        Title:       r.FormValue("title"),
         RequestType: r.FormValue("requesttype"),
-        Season: int32(tvSeason),
+        Season:      int32(tvSeason),
     }
 
     // validate
-    if err := Validate(&rq); err != nil {
+    if err := Validate(rq); err != nil {
         log.Println("Missed Validations")
         //  return missing fields
     }
     // once validated, add timestamp and uuid
     // rq.Uuid = uuid.New().String()
     rq.TimeRequested = ptypes.TimestampNow()
+    renderTemplate(w, "index", Append(rq, FileLocation, uuid.New().String()))
 
-    // read file, then write to file
-    // raw, err := ioutil.Reader(FILELOCATION)
-    fileData, err := ioutil.ReadFile(FileLocation)
-    if err != nil {
-        log.Fatal("HELP ME", err)
-    }
-    raw := bytes.NewReader(fileData)
+}
+
+func Append(request *PlexMovieRequest, fileLoc string, uuid string) *RequestList {
     requestList := &RequestList{}
-    if err = unmarshaler.Unmarshal(raw, requestList); err != nil {
-        log.Fatal("HELP ME w/ unmarshaler! ", err)
+    ReadFromFile(requestList, fileLoc)
+    requestList.Shitwewant[uuid] = request
+    if err := WriteToFile(requestList, fileLoc); err != nil {
+        log.Fatal("error writing to file ", err)
     }
-    requestList.Shitwewant[uuid.New().String()] = &rq
-    if err = WriteToFile(requestList, FileLocation); err != nil {
-        log.Fatal("BORKEN! ", err)
-    }
-
-    renderTemplate(w, "index", requestList)
+    return requestList
 }
 
 func WriteToFile(msg *RequestList, fileLoc string) error {
@@ -88,11 +87,11 @@ func WriteToFile(msg *RequestList, fileLoc string) error {
     return nil
 }
 
-func ReadFromFile(requestList *RequestList) {
-    fileData, err := ioutil.ReadFile(FileLocation) // just pass the file name
+func ReadFromFile(requestList *RequestList, fileLoc string) {
+    fileData, err := ioutil.ReadFile(fileLoc) // just pass the file name
 
     if err != nil {
-        log.Println("couldn't file file at "+FileLocation, err)
+        log.Println("couldn't file file at "+fileLoc, err)
     }
 
     byteReader := bytes.NewReader(fileData)
@@ -110,6 +109,7 @@ func Validate(movieRequest *PlexMovieRequest) error {
 }
 
 func FinishHim(w http.ResponseWriter, r *http.Request) {
+    r.Header.Set("FINISHED", "true")
     SubtractRequest(w, r)
 }
 
@@ -118,14 +118,19 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
     itemId := params["id"]
 
     currentReqs := &RequestList{}
-    ReadFromFile(currentReqs)
+    ReadFromFile(currentReqs, FileLocation)
 
-    _, ok := currentReqs.Shitwewant[itemId]
+    plexReq, ok := currentReqs.Shitwewant[itemId]
 
     if ok {
         delete(currentReqs.Shitwewant, itemId)
     } else {
         //it's not there it's not there
+    }
+    // if finished header set, add to finished.json before deleting from FileLocation
+    log.Printf("REQUEST HEADERS!! %v", r.Header)
+    if finished := r.Header.Get("FINISHED"); finished == "true" {
+        Append(plexReq, FinishedLocation, itemId)
     }
     //overwrite file
     if err := WriteToFile(currentReqs, FileLocation); err != nil {
@@ -133,9 +138,9 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-func Homepage (w http.ResponseWriter, r *http.Request) {
+func Homepage(w http.ResponseWriter, r *http.Request) {
     currentReqs := &RequestList{}
-    ReadFromFile(currentReqs)
+    ReadFromFile(currentReqs, FileLocation)
     renderTemplate(w, "index", currentReqs)
 }
 
