@@ -18,14 +18,29 @@ Request:
 package main
 
 import (
+    "github.com/golang/protobuf/jsonpb"
     "github.com/gorilla/mux"
     "github.com/urfave/negroni"
+    "log"
     "net/http"
     "os"
 )
 
 func AddRequest(w http.ResponseWriter, r *http.Request) {
+    // todo: validate against the movie database, tmdb when you get a api key
+    rq := PlexMovieRequest{}
+    unmarshaler := &jsonpb.Unmarshaler{
+        AllowUnknownFields: true,
+    }
+    if err := unmarshaler.Unmarshal(r.Body, &rq); err != nil {
+        log.Fatal("DISTRESS CALL!!!", err)
+    }
+    w.Write([]byte("hi"))
 
+}
+
+func Validate(title *string) error {
+    return nil
 }
 
 func main() {

@@ -6,6 +6,7 @@ message PlexMovieRequest {
     string title = 1;
     string requestType = 2;
     string season = 3;
+    string uuid = 4;
 }
 
 message RequestList {
