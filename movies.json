@@ -1,15 +1,1 @@
-{
-"shitwewant": {
-  "some-random-uuid": {
-    "title": "this is a movie",
-    "requestType": "movie",
-    "timeRequested" :  "1972-05-01T10:00:20.021Z"
-  },
-  "another-random-uuid": {
-    "title": "this is a tv show",
-    "requestType": "tv",
-    "season": 1,
-    "timeRequested" : "1972-05-23T10:00:20.021Z"
-  }
-}
-}
+{"shitwewant":{"another-random-uuid":{"title":"this is a tv show","requestType":"tv","season":1,"timeRequested":"1972-05-23T10:00:20.021Z"}}}
