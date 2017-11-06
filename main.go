@@ -88,14 +88,14 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
     fileData, err := ioutil.ReadFile(FileLocation) // just pass the file name
 
     if err != nil {
-        fmt.Print(err)
+        log.Println("couldn't file file at " + FileLocation, err)
     }
 
     byteReader := bytes.NewReader(fileData)
     currentReqs := &RequestList{}
 
     if err := unmarshaler.Unmarshal(byteReader, currentReqs); err != nil {
-        fmt.Print(err)
+        log.Println("couldn't parse file", err)
     }
 
 	_, ok := currentReqs.Shitwewant[itemId]
@@ -109,7 +109,7 @@ func SubtractRequest(w http.ResponseWriter, r *http.Request) {
 	//overwrite file
 	reqs, err := marshaler.MarshalToString(currentReqs)
 	if err != nil {
-		fmt.Print(err)
+		log.Println("couldn't write to file", err)
 	}
 	err = ioutil.WriteFile(FileLocation, []byte(reqs), FilePerm)
 }
