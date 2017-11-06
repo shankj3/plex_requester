@@ -77,6 +77,10 @@ func Validate(movieRequest *PlexMovieRequest) error {
     return nil
 }
 
+func FinishHim(w http.ResponseWriter, r *http.Request) {
+    SubtractRequest(w, r)
+}
+
 func SubtractRequest(w http.ResponseWriter, r *http.Request) {
      params := mux.Vars(r)
      itemId := params["id"]
@@ -119,11 +123,10 @@ func main() {
 
     //TODO: validate adding input with tmdb api
     mux.HandleFunc("/add", AddRequest).Methods("POST")
-
     mux.HandleFunc("/subtract/{id}", SubtractRequest).Methods("DELETE")
 
     //TODO: email or text notification that something new got added?
-    // mux.HandleFunc("/finishhim")
+     mux.HandleFunc("/finishhim/{id}", FinishHim).Methods("POST")
 
     n := negroni.Classic()
     n.UseHandler(mux)
