@@ -30,6 +30,7 @@ import (
     "net/http"
     "os"
     "strconv"
+    "fmt"
 )
 
 const FileLocation = "movies.json"
@@ -113,29 +114,39 @@ func FinishHim(w http.ResponseWriter, r *http.Request) {
     SubtractRequest(w, r)
 }
 
-func SubtractRequest(w http.ResponseWriter, r *http.Request) {
-    params := mux.Vars(r)
-    itemId := params["id"]
 
+func RemoveEntry(uuid string) *PlexMovieRequest{
     currentReqs := &RequestList{}
     ReadFromFile(currentReqs, FileLocation)
 
-    plexReq, ok := currentReqs.Shitwewant[itemId]
+    plexReq, ok := currentReqs.Shitwewant[uuid]
 
     if ok {
-        delete(currentReqs.Shitwewant, itemId)
+        delete(currentReqs.Shitwewant, uuid)
     } else {
         //it's not there it's not there
     }
+
+    //overwrite file
+    if err := WriteToFile(currentReqs, FileLocation); err != nil {
+        log.Fatal("BORKEN! ", err)
+    }
+    return plexReq
+}
+
+func SubtractRequest(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("AT LEAST I'M INSIDE PHRASING")
+    params := mux.Vars(r)
+    itemId := params["id"]
+
+    plexReq := RemoveEntry(itemId)
+
     // if finished header set, add to finished.json before deleting from FileLocation
     log.Printf("REQUEST HEADERS!! %v", r.Header)
     if finished := r.Header.Get("FINISHED"); finished == "true" {
         Append(plexReq, FinishedLocation, itemId)
     }
-    //overwrite file
-    if err := WriteToFile(currentReqs, FileLocation); err != nil {
-        log.Fatal("BORKEN! ", err)
-    }
+    http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func ListRequests(w http.ResponseWriter, r *http.Request) {
@@ -167,7 +178,7 @@ func main() {
 
     //TODO: validate adding input with tmdb api
     mux.HandleFunc("/add", AddRequest).Methods("POST")
-    mux.HandleFunc("/subtract/{id}", SubtractRequest).Methods("DELETE")
+    mux.HandleFunc("/subtract/{id}", SubtractRequest).Methods("POST", "DELETE")
 
     //TODO: email or text notification that something new got added?
     mux.HandleFunc("/finishhim/{id}", FinishHim).Methods("POST")

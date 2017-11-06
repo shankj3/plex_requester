@@ -4,16 +4,32 @@
 <li>
     <b>Title:</b>{{ $value.Title }},
     <b>Type:</b>{{ $value.RequestType }},
+{{ if gt $value.Season 0 }}
     <b>Season:</b>{{ $value.Season }}
+{{ end }}
+
+    <form style="display:inline;" action="/subtract/{{ $key }}" method="POST">
+        <input type="submit" value="remove entry">
+    </form>
+
+    <form style="display:inline;" action="/finishhim/{{ $key }}" method="POST">
+        <input type="submit" value="TJ added this">
+    </form>
+
 </li>
 {{ end }}
 
-<h1>Add New Item</h1>
 
+<h1>Add New Item</h1>
 
 <form action="/add" method="POST">
     Title:<input type="text" name="title"></br>
-    RequestType:<input type="text" name="requesttype"></br>
+    RequestType:
+    <select name="requesttype">
+        <option value="movie">Movie</option>
+        <option value="tv">TV</option>
+    </select></br>
+
     (optional) Season:<input type="text" name="season"></br>
     <input type="submit" value="yaaaaas">
 </form>

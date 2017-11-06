@@ -8,7 +8,6 @@ message PlexMovieRequest {
     string title = 1;
     string requestType = 2;
     int32 season = 3;
-//    string uuid = 4;
     google.protobuf.Timestamp timeRequested = 5;
 }
 
